@@ -1087,7 +1087,7 @@ describe("package artifact reuse", () => {
       'echo "timeout command not found; cannot bound live ACP bind setup after ${timeout_value}"',
     );
     expect(readFileSync("scripts/test-live-acp-bind-docker.sh", "utf8")).toContain(
-      "run_setup_command npm install -g @anthropic-ai/claude-code",
+      'run_setup_command npm install -g "@anthropic-ai/claude-code@$claude_code_version"',
     );
     expect(readFileSync("scripts/test-live-acp-bind-docker.sh", "utf8")).toContain(
       "run_setup_command bash -lc 'curl -fsSL https://app.factory.ai/cli | sh'",
@@ -2140,7 +2140,7 @@ describe("package artifact reuse", () => {
       "uses: openclaw/clawhub/.github/workflows/package-publish.yml@d8096dfc039e86ab942ddf9ef117d04849fd84c1",
     );
     expect(clawHubWorkflow).toContain(
-      "family: ${{ contains(fromJson('[\"@openclaw/acpx\",\"@openclaw/diffs\",\"@openclaw/feishu\",\"@openclaw/qqbot\"]'), matrix.plugin.packageName) && 'bundle-plugin' || '' }}",
+      'family: ${{ contains(fromJson(\'["@openclaw/acpx","@openclaw/diffs","@openclaw/feishu","@openclaw/qqbot"]\'), matrix.plugin.packageName) && \'bundle-plugin\' || \'\' }}',
     );
     expect(clawHubWorkflow).toContain("dry_run:");
     expect(clawHubWorkflow).toContain("default: false");

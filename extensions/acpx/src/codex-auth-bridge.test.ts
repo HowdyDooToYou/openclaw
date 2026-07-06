@@ -180,7 +180,7 @@ describe("prepareAcpxCodexAuthConfig", () => {
     expect(wrapper).not.toContain("@zed-industries/codex-acp@^0.11.1");
   });
 
-  it("falls back to the patched Claude ACP package when the local adapter is unavailable", async () => {
+  it("falls back to the pinned Claude ACP package when the local adapter is unavailable", async () => {
     const root = await makeTempDir();
     const stateDir = path.join(root, "state");
     const generated = generatedClaudePaths(stateDir);
@@ -196,7 +196,7 @@ describe("prepareAcpxCodexAuthConfig", () => {
     });
 
     const wrapper = await fs.readFile(generated.wrapperPath, "utf8");
-    expect(wrapper).toContain('"@agentclientprotocol/claude-agent-acp@0.39.0"');
+    expect(wrapper).toContain('"@agentclientprotocol/claude-agent-acp@0.55.0"');
     expect(wrapper).toContain('"--", "claude-agent-acp"');
     expect(wrapper).not.toContain("@agentclientprotocol/claude-agent-acp@^0.31.0");
     expect(wrapper).not.toContain("@agentclientprotocol/claude-agent-acp@0.31.0");

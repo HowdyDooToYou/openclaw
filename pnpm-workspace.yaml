@@ -12,7 +12,6 @@ minimumReleaseAgeExclude:
   - "@openclaw/proxyline@0.3.3"
   - "acpx"
   - "tokenjuice"
-  - "@agentclientprotocol/claude-agent-acp@0.39.0"
   - "@agentclientprotocol/sdk"
   - "axios"
   - "basic-ftp"
@@ -149,6 +148,3 @@ packageExtensions:
     peerDependenciesMeta:
       sharp:
         optional: true
-
-patchedDependencies:
-  "@agentclientprotocol/claude-agent-acp@0.39.0": patches/@agentclientprotocol__claude-agent-acp@0.39.0.patch

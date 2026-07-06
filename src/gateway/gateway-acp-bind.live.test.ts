@@ -746,7 +746,9 @@ describeLive("gateway live (ACP bind)", () => {
             });
           } catch {
             if (attempt === 2) {
-              break;
+              throw new Error(
+                `${liveAgent} ACP bind completed, but the bound session did not emit an assistant transcript`,
+              );
             }
             logLiveStep("bound follow-up token not observed yet; retrying");
           }

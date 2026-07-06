@@ -30,6 +30,7 @@ Docs: https://docs.openclaw.ai
 
 ### Fixes
 
+- **ACP/Claude adapter:** forward assistant text from non-streaming gateways and fail stalled idle turns cleanly by updating the bundled Claude ACP adapter to 0.55.0.
 - **ClawRouter auth profiles:** resolve credential-scoped catalog models during agent runs when the proxy key is stored in an auth profile, and document plugin and model allowlists.
 - **Telegram durability:** recover stalled ingress claims, retry restart-dropped media, survive transient polling errors, dead-letter poison updates, preserve forwarded rich text, route plugin callbacks correctly, keep progress updates in one stable multi-line window, throttle reconnect queue drains so fast healthy polls cannot starve active replies, and fall back safely when Telegram rejects rich final replies. (#97118, #98102, #98735, #98775, #98776, #97174, #98907, #98786) Thanks @vincentkoc, @luoyanglang, @DaveArcher18, @obviyus, @goldmar, @Marvinthebored, @shakkernerd, and @RomneyDa.
 - **Agent and context reliability:** preserve runtime overrides, steered subagent tasks, fallback tool-call hints, and legacy reseed attachments; soft-resume CLI sessions across prompt-only drift; honor stop signals that arrive during eager session-lock acquisition before any provider prompt starts; improve harness-aware context estimation and compaction prechecks; time out silent local streams; recover mid-stream failures; and cap Gateway run-cache growth. (#92237, #77539, #99851, #99839, #99822, #97928, #97861, #98525, #95430, #77973) Thanks @sercada, @amittell, @obviyus, @liuhao1024, @yetval, @osolmaz, @lzyyzznl, @vincentkoc, @alexelgier, @fede-kamel, and @maweibin.
@@ -386,7 +387,7 @@ This audited record covers the complete v2026.6.11..HEAD history: 964 merged PRs
 - **PR #97575** fix(webchat): keep media loads pinned to bottom. Related #96593. Thanks @TurboTheTurtle and @yyz20161101-create.
 - **PR #85829** Avoid post-run auth success lane delay. Related #85822. Thanks @TurboTheTurtle and @ericpearson.
 - **PR #96577** fix(slack): truncate rich text preview on a UTF-16 boundary. Thanks @llagy009.
-- **PR #83187** fix(heartbeat): clear pendingFinalDelivery* on send success. Related #83184. Thanks @agocs.
+- **PR #83187** fix(heartbeat): clear pendingFinalDelivery\* on send success. Related #83184. Thanks @agocs.
 - **PR #97540** fix(zai): bound Z.AI endpoint-probe error body reads to prevent OOM. Thanks @Alix-007 and @vincentkoc.
 - **PR #97551** fix(proxy-capture): bound captured response bodies to prevent OOM. Thanks @Alix-007 and @vincentkoc.
 - **PR #97548** improve(qa-lab): bound Discord API response reads in mantis smoke. Thanks @Alix-007 and @vincentkoc.
@@ -1015,6 +1016,7 @@ This audited record covers the complete v2026.6.11..HEAD history: 964 merged PRs
 - **PR #99861** fix(telegram): one outbound rich-HTML normalizer and one rich-to-plain fallback policy. Related #99833. Thanks @obviyus.
 - **PR #99866** fix(telegram): classify inbound events from the canonical mention decision so direct mentions stop lurking. Related #99854. Thanks @obviyus.
 - **PR #99714** perf(usage): shrink durable usage cache entries. Related #99511. Thanks @dexhunter and @wayne524.
+
 ## 2026.6.11
 
 We heard the feedback. v2026.6.11 focuses on the rough edges that make OpenClaw feel less dependable, with fixes for misplaced replies, stuck sends, reconnects, model setup failures, and safer admin defaults.

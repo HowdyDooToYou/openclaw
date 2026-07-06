@@ -259,11 +259,13 @@ export type ChannelSetupWizardFinalize = (params: {
   | {
       cfg?: OpenClawConfig;
       credentialValues?: ChannelSetupWizardCredentialValues;
+      setupApplied?: boolean;
     }
   | void
   | Promise<{
       cfg?: OpenClawConfig;
       credentialValues?: ChannelSetupWizardCredentialValues;
+      setupApplied?: boolean;
     } | void>;
 
 /** Full declarative setup wizard consumed by the generic setup adapter. */
@@ -375,6 +377,7 @@ export type ChannelOnboardingPostWriteHook = {
 export type ChannelSetupResult = {
   cfg: OpenClawConfig;
   accountId?: string;
+  setupApplied?: boolean;
 };
 
 export type ChannelSetupConfiguredResult = ChannelSetupResult | "skip";

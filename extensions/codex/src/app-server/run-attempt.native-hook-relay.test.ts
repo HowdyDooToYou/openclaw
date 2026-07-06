@@ -30,9 +30,7 @@ const DISABLED_CODEX_WEB_SEARCH_THREAD_CONFIG_FINGERPRINT = JSON.stringify({
   web_search: "disabled",
 });
 
-function writeCodexAppServerBinding(
-  ...args: Parameters<typeof writeRawCodexAppServerBinding>
-) {
+function writeCodexAppServerBinding(...args: Parameters<typeof writeRawCodexAppServerBinding>) {
   const [sessionFile, binding, lookup] = args;
   return writeRawCodexAppServerBinding(
     sessionFile,
@@ -690,7 +688,7 @@ describe("runCodexAppServerAttempt native hook relay", () => {
   });
 
   it("extends native hook relay cleanup grace for configured hook timeouts", () => {
-    expect(testing.resolveCodexNativeHookRelayUnregisterGraceMs(undefined)).toBe(10_000);
+    expect(testing.resolveCodexNativeHookRelayUnregisterGraceMs(undefined)).toBe(15_000);
     expect(testing.resolveCodexNativeHookRelayUnregisterGraceMs(5)).toBe(10_000);
     expect(testing.resolveCodexNativeHookRelayUnregisterGraceMs(9)).toBe(14_000);
     expect(testing.resolveCodexNativeHookRelayUnregisterGraceMs(60)).toBe(65_000);

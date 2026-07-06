@@ -73,6 +73,7 @@ import {
 } from "./transport-stream-shared.js";
 
 const CLAUDE_CODE_VERSION = "2.1.75";
+const CLAUDE_CODE_BILLING_SYSTEM_BLOCK = `x-anthropic-billing-header: cc_version=${CLAUDE_CODE_VERSION}; cc_entrypoint=sdk-cli;`;
 const ANTHROPIC_MESSAGES_ERROR_BODY_MAX_BYTES = 8 * 1024;
 const ANTHROPIC_MESSAGES_ERROR_BODY_MAX_CHARS = 400;
 const ANTHROPIC_MESSAGES_ERROR_BODY_READ_IDLE_TIMEOUT_MS = 10_000;
@@ -962,6 +963,11 @@ function buildAnthropicParams(
   };
   if (isOAuthToken) {
     params.system = [
+      // Anthropic requires this first block to route Claude subscription OAuth billing.
+      {
+        type: "text",
+        text: CLAUDE_CODE_BILLING_SYSTEM_BLOCK,
+      },
       {
         type: "text",
         text: "You are Claude Code, Anthropic's official CLI for Claude.",

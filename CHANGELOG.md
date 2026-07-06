@@ -30,6 +30,7 @@ Docs: https://docs.openclaw.ai
 
 ### Fixes
 
+- **Anthropic subscription OAuth:** restore direct Claude model access by sending the billing identity block required for Claude Code subscription routing.
 - **ACP/Claude adapter:** forward assistant text from non-streaming gateways and fail stalled idle turns cleanly by updating the bundled Claude ACP adapter to 0.55.0. Thanks @vincentkoc.
 - **ClawRouter auth profiles:** resolve credential-scoped catalog models during agent runs when the proxy key is stored in an auth profile, and document plugin and model allowlists.
 - **Telegram durability:** recover stalled ingress claims, retry restart-dropped media, survive transient polling errors, dead-letter poison updates, preserve forwarded rich text, route plugin callbacks correctly, keep progress updates in one stable multi-line window, throttle reconnect queue drains so fast healthy polls cannot starve active replies, and fall back safely when Telegram rejects rich final replies. (#97118, #98102, #98735, #98775, #98776, #97174, #98907, #98786) Thanks @vincentkoc, @luoyanglang, @DaveArcher18, @obviyus, @goldmar, @Marvinthebored, @shakkernerd, and @RomneyDa.

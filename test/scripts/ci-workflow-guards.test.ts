@@ -333,9 +333,7 @@ describe("ci workflow guards", () => {
     expect(appCompileSdk).toBe(benchmarkCompileSdk);
     for (const job of sdkJobs) {
       const cacheStep = job.steps.find((step) => step.name === "Cache Android SDK");
-      const installStep = job.steps.find(
-        (step) => step.name === "Install Android SDK packages",
-      );
+      const installStep = job.steps.find((step) => step.name === "Install Android SDK packages");
 
       expect(cacheStep.with.key).toContain(`platform-${appCompileSdk}.0-`);
       expect(installStep.run).toContain(`"${packageId}"`);
@@ -418,6 +416,11 @@ describe("ci workflow guards", () => {
     expect(workflow.jobs["check-additional-shard"].strategy.matrix.include).toContainEqual({
       check_name: "check-session-accessor-boundary",
       group: "session-accessor-boundary",
+      runner: "blacksmith-4vcpu-ubuntu-2404",
+    });
+    expect(workflow.jobs["check-additional-shard"].strategy.matrix.include).toContainEqual({
+      check_name: "check-sqlite-session-schema-baseline",
+      group: "sqlite-session-schema-baseline",
       runner: "blacksmith-4vcpu-ubuntu-2404",
     });
     expect(workflow.jobs["checks-windows"]["runs-on"]).toContain("matrix.runner");
@@ -544,16 +547,24 @@ describe("ci workflow guards", () => {
     }
   });
 
-  it("runs plugin SDK API and surface drift checks in workflow sanity", () => {
+  it("runs generated baseline drift checks in workflow sanity", () => {
     const workflow = readWorkflowSanityWorkflow();
     const steps = workflow.jobs["generated-doc-baselines"].steps;
     const stepNames = steps.map((step) => step.name);
 
     expect(stepNames).toContain("Check plugin SDK API baseline drift");
+    expect(stepNames).toContain("Check SQLite sessions/transcripts schema baseline drift");
     expect(stepNames).toContain("Check plugin SDK surface budget");
     expect(stepNames.indexOf("Check plugin SDK API baseline drift")).toBeLessThan(
-      stepNames.indexOf("Check plugin SDK surface budget"),
+      stepNames.indexOf("Check SQLite sessions/transcripts schema baseline drift"),
     );
+    expect(
+      stepNames.indexOf("Check SQLite sessions/transcripts schema baseline drift"),
+    ).toBeLessThan(stepNames.indexOf("Check plugin SDK surface budget"));
+    expect(
+      steps.find((step) => step.name === "Check SQLite sessions/transcripts schema baseline drift")
+        .run,
+    ).toBe("pnpm sqlite:sessions-schema:check");
     expect(steps.find((step) => step.name === "Check plugin SDK surface budget").run).toBe(
       "pnpm plugin-sdk:surface:check",
     );

@@ -192,12 +192,14 @@ export type ReadRecentSessionMessagesOptions = {
   maxBytes?: number;
   maxLines?: number;
   allowResetArchiveFallback?: boolean;
+  resetArchiveOnly?: boolean;
 };
 
 export type ReadSessionMessagesPageOptions = {
   offset: number;
   maxMessages: number;
   allowResetArchiveFallback?: boolean;
+  resetArchiveOnly?: boolean;
 };
 
 export type ReadSessionMessagesAsyncOptions =
@@ -205,6 +207,7 @@ export type ReadSessionMessagesAsyncOptions =
       mode: "full";
       reason: string;
       allowResetArchiveFallback?: boolean;
+      resetArchiveOnly?: boolean;
     }
   | ({
       mode: "recent";
@@ -634,7 +637,9 @@ export async function readSessionMessagesWithSourceAsync(
   }
   const filePath =
     opts.allowResetArchiveFallback === true
-      ? await findExistingTranscriptHistoryPathAsync(sessionId, storePath, sessionFile, agentId)
+      ? await findExistingTranscriptHistoryPathAsync(sessionId, storePath, sessionFile, agentId, {
+          resetArchiveOnly: opts.resetArchiveOnly === true,
+        })
       : findExistingTranscriptPath(sessionId, storePath, sessionFile, agentId);
   if (!filePath) {
     return { messages: [] };
@@ -651,7 +656,7 @@ export async function readSessionMessageByIdAsync(
   storePath: string | undefined,
   sessionFile: string | undefined,
   messageId: string,
-  opts?: { allowResetArchiveFallback?: boolean; agentId?: string },
+  opts?: { allowResetArchiveFallback?: boolean; agentId?: string; resetArchiveOnly?: boolean },
 ): Promise<{ message?: unknown; seq?: number; oversized: boolean; found: boolean }> {
   const filePath =
     opts?.allowResetArchiveFallback === true
@@ -660,6 +665,7 @@ export async function readSessionMessageByIdAsync(
           storePath,
           sessionFile,
           opts.agentId,
+          { resetArchiveOnly: opts.resetArchiveOnly === true },
         )
       : findExistingTranscriptPath(sessionId, storePath, sessionFile, opts?.agentId);
   if (!filePath) {
@@ -766,7 +772,9 @@ async function readRecentSessionMessagesWithSourceAsync(
 
   const filePath =
     opts?.allowResetArchiveFallback === true
-      ? await findExistingTranscriptHistoryPathAsync(sessionId, storePath, sessionFile, agentId)
+      ? await findExistingTranscriptHistoryPathAsync(sessionId, storePath, sessionFile, agentId, {
+          resetArchiveOnly: opts.resetArchiveOnly === true,
+        })
       : findExistingTranscriptPath(sessionId, storePath, sessionFile, agentId);
   if (!filePath) {
     return { messages: [] };
@@ -807,7 +815,9 @@ export async function readRecentSessionMessagesWithStatsAsync(
 ): Promise<ReadRecentSessionMessagesResult> {
   const filePath =
     opts.allowResetArchiveFallback === true
-      ? await findExistingTranscriptHistoryPathAsync(sessionId, storePath, sessionFile, agentId)
+      ? await findExistingTranscriptHistoryPathAsync(sessionId, storePath, sessionFile, agentId, {
+          resetArchiveOnly: opts.resetArchiveOnly === true,
+        })
       : findExistingTranscriptPath(sessionId, storePath, sessionFile, agentId);
   if (!filePath) {
     return { messages: [], totalMessages: 0 };
@@ -1198,10 +1208,13 @@ async function findExistingTranscriptHistoryPathAsync(
   storePath: string | undefined,
   sessionFile?: string,
   agentId?: string,
+  opts?: { resetArchiveOnly?: boolean },
 ): Promise<string | null> {
-  const activePath = findExistingTranscriptPath(sessionId, storePath, sessionFile, agentId);
-  if (activePath) {
-    return activePath;
+  if (opts?.resetArchiveOnly !== true) {
+    const activePath = findExistingTranscriptPath(sessionId, storePath, sessionFile, agentId);
+    if (activePath) {
+      return activePath;
+    }
   }
   for (const archivePath of await resolveSessionTranscriptResetArchiveCandidatesAsync(
     sessionId,
@@ -1211,14 +1224,16 @@ async function findExistingTranscriptHistoryPathAsync(
   )) {
     const stat = await fs.promises.stat(archivePath).catch(() => null);
     if (stat?.isFile()) {
-      const refreshedActivePath = findExistingTranscriptPath(
-        sessionId,
-        storePath,
-        sessionFile,
-        agentId,
-      );
-      if (refreshedActivePath) {
-        return refreshedActivePath;
+      if (opts?.resetArchiveOnly !== true) {
+        const refreshedActivePath = findExistingTranscriptPath(
+          sessionId,
+          storePath,
+          sessionFile,
+          agentId,
+        );
+        if (refreshedActivePath) {
+          return refreshedActivePath;
+        }
       }
       return archivePath;
     }
@@ -1981,18 +1996,22 @@ function extractMediaSummary(message: TranscriptPreviewMessage): string | null {
   return null;
 }
 
-function buildPreviewItems(
-  messages: TranscriptPreviewMessage[],
+export function buildSessionPreviewItems(
+  messages: readonly unknown[],
   maxItems: number,
   maxChars: number,
 ): SessionPreviewItem[] {
   const items: SessionPreviewItem[] = [];
   for (const message of messages) {
-    const toolCall = isToolCall(message);
-    const role = normalizeRole(message.role, toolCall);
-    let text = extractPreviewText(message);
+    if (!message || typeof message !== "object" || Array.isArray(message)) {
+      continue;
+    }
+    const previewMessage = message as TranscriptPreviewMessage;
+    const toolCall = isToolCall(previewMessage);
+    const role = normalizeRole(previewMessage.role, toolCall);
+    let text = extractPreviewText(previewMessage);
     if (!text) {
-      const toolNames = extractToolNames(message);
+      const toolNames = extractToolNames(previewMessage);
       if (toolNames.length > 0) {
         const shown = toolNames.slice(0, 2);
         const overflow = toolNames.length - shown.length;
@@ -2003,7 +2022,7 @@ function buildPreviewItems(
       }
     }
     if (!text) {
-      text = extractMediaSummary(message);
+      text = extractMediaSummary(previewMessage);
     }
     if (!text) {
       continue;
@@ -2094,7 +2113,7 @@ export function readSessionPreviewItemsFromTranscript(
   for (const readSize of PREVIEW_READ_SIZES) {
     const messages = readRecentMessagesFromTranscript(filePath, boundedItems, readSize);
     if (messages.length > 0 || readSize === PREVIEW_READ_SIZES[PREVIEW_READ_SIZES.length - 1]) {
-      return buildPreviewItems(messages, boundedItems, boundedChars);
+      return buildSessionPreviewItems(messages, boundedItems, boundedChars);
     }
   }
 

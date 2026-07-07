@@ -1398,5 +1398,13 @@
   {
     "source": "Zalo personal channel config",
     "target": "Zalo 个人渠道配置"
+  },
+  {
+    "source": "Path 3 SQLite session artifact family",
+    "target": "Path 3 SQLite 会话工件族"
+  },
+  {
+    "source": "Path 3 live SQLite E2E harness",
+    "target": "Path 3 live SQLite E2E harness"
   }
 ]

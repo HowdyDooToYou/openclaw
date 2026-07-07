@@ -510,7 +510,7 @@ const DEFAULT_TELEGRAM_TEST_CONFIG: OpenClawConfig = {
   },
 };
 
-export function makeTelegramMessageCtx(params: {
+function makeTelegramMessageCtx(params: {
   chat: {
     id: number;
     type: string;

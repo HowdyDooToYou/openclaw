@@ -753,6 +753,8 @@ function ensureAdditiveStateColumns(db: DatabaseSync, pathname: string): void {
   ensureColumn(db, "cron_jobs", "stagger_ms INTEGER");
   ensureColumn(db, "cron_jobs", "session_target TEXT NOT NULL DEFAULT 'main'");
   ensureColumn(db, "cron_jobs", "wake_mode TEXT NOT NULL DEFAULT 'auto'");
+  ensureColumn(db, "cron_jobs", "trigger_script TEXT");
+  ensureColumn(db, "cron_jobs", "trigger_once INTEGER");
   ensureColumn(db, "cron_jobs", "payload_kind TEXT NOT NULL DEFAULT 'message'");
   ensureColumn(db, "cron_jobs", "payload_message TEXT");
   ensureColumn(db, "cron_jobs", "payload_model TEXT");

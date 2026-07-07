@@ -94,7 +94,7 @@ const mergeOrigin = (
 };
 
 /** Derives session origin metadata from an inbound message context. */
-export function deriveSessionOrigin(
+function deriveSessionOrigin(
   ctx: MsgContext,
   opts?: { skipSystemEventOrigin?: boolean },
 ): SessionOrigin | undefined {
@@ -160,7 +160,7 @@ export function snapshotSessionOrigin(entry?: SessionEntry): SessionOrigin | und
   return { ...entry.origin };
 }
 
-export function deriveGroupSessionPatch(params: {
+function deriveGroupSessionPatch(params: {
   ctx: MsgContext;
   sessionKey: string;
   existing?: SessionEntry;

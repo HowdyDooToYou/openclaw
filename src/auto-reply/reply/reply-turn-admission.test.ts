@@ -1,8 +1,13 @@
 // Tests reply turn admission decisions for active, queued, and aborted runs.
-import fs from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useAutoCleanupTempDirTracker } from "../../../test/helpers/temp-dir.js";
+import {
+  deleteSessionEntryLifecycle,
+  replaceSessionEntry,
+  replaceSessionEntrySync,
+} from "../../config/sessions/session-accessor.js";
+import type { SessionEntry } from "../../config/sessions/types.js";
 import {
   interruptSessionWorkAdmissions,
   runExclusiveSessionLifecycleMutation,
@@ -28,8 +33,12 @@ function createDeferred() {
 
 function createSessionStore(entries: Record<string, object>): string {
   const root = tempDirs.make("openclaw-reply-admission-");
+  // The store handle stays a sessions.json path; the sqlite-backed accessor
+  // resolves it to the per-agent DB, so fixtures must seed through the accessor.
   const storePath = path.join(root, "sessions.json");
-  fs.writeFileSync(storePath, JSON.stringify(entries));
+  for (const [sessionKey, entry] of Object.entries(entries)) {
+    replaceSessionEntrySync({ sessionKey, storePath }, entry as SessionEntry);
+  }
   return storePath;
 }
 
@@ -52,12 +61,11 @@ describe("reply turn admission", () => {
       run: async () => {
         mutationStarted.resolve();
         await releaseMutation.promise;
-        fs.writeFileSync(
-          storePath,
-          JSON.stringify({
-            [sessionKey]: { sessionId, updatedAt: Date.now(), archivedAt: Date.now() },
-          }),
-        );
+        await replaceSessionEntry({ sessionKey, storePath }, {
+          sessionId,
+          updatedAt: Date.now(),
+          archivedAt: Date.now(),
+        } as SessionEntry);
       },
     });
     await mutationStarted.promise;
@@ -91,7 +99,11 @@ describe("reply turn admission", () => {
       run: async () => {
         mutationStarted.resolve();
         await releaseMutation.promise;
-        fs.writeFileSync(storePath, JSON.stringify({}));
+        await deleteSessionEntryLifecycle({
+          storePath,
+          archiveTranscript: false,
+          target: { canonicalKey: sessionKey, storeKeys: [sessionKey] },
+        });
       },
     });
     await mutationStarted.promise;
@@ -125,12 +137,10 @@ describe("reply turn admission", () => {
       run: async () => {
         mutationStarted.resolve();
         await releaseMutation.promise;
-        fs.writeFileSync(
-          storePath,
-          JSON.stringify({
-            [sessionKey]: { sessionId: nextSessionId, updatedAt: Date.now() },
-          }),
-        );
+        await replaceSessionEntry({ sessionKey, storePath }, {
+          sessionId: nextSessionId,
+          updatedAt: Date.now(),
+        } as SessionEntry);
       },
     });
     await mutationStarted.promise;
@@ -168,12 +178,10 @@ describe("reply turn admission", () => {
       run: async () => {
         mutationStarted.resolve();
         await releaseMutation.promise;
-        fs.writeFileSync(
-          storePath,
-          JSON.stringify({
-            [sessionKey]: { sessionId: nextSessionId, updatedAt: Date.now() },
-          }),
-        );
+        await replaceSessionEntry({ sessionKey, storePath }, {
+          sessionId: nextSessionId,
+          updatedAt: Date.now(),
+        } as SessionEntry);
       },
     });
     await mutationStarted.promise;
@@ -208,12 +216,10 @@ describe("reply turn admission", () => {
         mutationStarted.resolve();
         await releaseMutation.promise;
         abortController.abort();
-        fs.writeFileSync(
-          storePath,
-          JSON.stringify({
-            [sessionKey]: { sessionId: "session-after-reset", updatedAt: Date.now() },
-          }),
-        );
+        await replaceSessionEntry({ sessionKey, storePath }, {
+          sessionId: "session-after-reset",
+          updatedAt: Date.now(),
+        } as SessionEntry);
       },
     });
     await mutationStarted.promise;
@@ -727,12 +733,10 @@ describe("reply turn admission", () => {
     await new Promise<void>((resolve) => {
       setImmediate(resolve);
     });
-    fs.writeFileSync(
-      storePath,
-      JSON.stringify({
-        [sessionKey]: { sessionId: nextSessionId, updatedAt: Date.now() },
-      }),
-    );
+    await replaceSessionEntry({ sessionKey, storePath }, {
+      sessionId: nextSessionId,
+      updatedAt: Date.now(),
+    } as SessionEntry);
     active.updateSessionId(nextSessionId);
     active.complete();
     const result = await admitted;
@@ -758,12 +762,10 @@ describe("reply turn admission", () => {
     });
     active.setPhase("preflight_compacting");
     active.updateSessionId(nextSessionId);
-    fs.writeFileSync(
-      storePath,
-      JSON.stringify({
-        [sessionKey]: { sessionId: nextSessionId, updatedAt: Date.now() },
-      }),
-    );
+    await replaceSessionEntry({ sessionKey, storePath }, {
+      sessionId: nextSessionId,
+      updatedAt: Date.now(),
+    } as SessionEntry);
     active.complete();
 
     const result = await admitReplyTurn({
@@ -797,12 +799,10 @@ describe("reply turn admission", () => {
     });
     active.setPhase("preflight_compacting");
     active.updateSessionId(nextSessionId);
-    fs.writeFileSync(
-      storePath,
-      JSON.stringify({
-        [sessionKey]: { sessionId: nextSessionId, updatedAt: Date.now() },
-      }),
-    );
+    await replaceSessionEntry({ sessionKey, storePath }, {
+      sessionId: nextSessionId,
+      updatedAt: Date.now(),
+    } as SessionEntry);
 
     const admitted = admitReplyTurn({
       sessionKey,
@@ -876,12 +876,10 @@ describe("reply turn admission", () => {
     });
     active.setPhase("preflight_compacting");
     active.updateSessionId(nextSessionId);
-    fs.writeFileSync(
-      storePath,
-      JSON.stringify({
-        [sessionKey]: { sessionId: nextSessionId, updatedAt: Date.now() },
-      }),
-    );
+    await replaceSessionEntry({ sessionKey, storePath }, {
+      sessionId: nextSessionId,
+      updatedAt: Date.now(),
+    } as SessionEntry);
     finish(active);
 
     const result = await admitReplyTurn({

@@ -187,7 +187,7 @@ export const REPLY_RUN_TERMINAL_SETTLE_TIMEOUT_MS = 60_000;
 // Timers never refresh activity; agent events and queue injection do.
 export const REPLY_RUN_STALE_TAKEOVER_MS = 10 * 60_000;
 
-export type ReplyOperationStaleReason = "terminal_unreleased" | "no_activity";
+export type ReplyOperationStaleReason = "terminal_unreleased" | "no_activity" | "stuck_recovery";
 
 export class ReplyRunAlreadyActiveError extends Error {
   constructor(sessionKey: string) {
@@ -838,6 +838,14 @@ export function expireStaleReplyOperation(
   return expireReplyOperationByOperation.get(operation)?.(reason) ?? false;
 }
 
+export function expireStaleReplyRunBySessionId(
+  sessionId: string,
+  reason: ReplyOperationStaleReason,
+): boolean {
+  const operation = resolveReplyRunForCurrentSessionId(sessionId);
+  return operation ? expireStaleReplyOperation(operation, reason) : false;
+}
+
 export const replyRunRegistry: ReplyRunRegistry = {
   begin(params) {
     return createReplyOperation(params);
@@ -962,6 +970,11 @@ export function queueReplyRunMessage(
   const operation = resolveReplyRunForCurrentSessionId(sessionId);
   const backend = operation ? getAttachedBackend(operation) : undefined;
   if (!operation || operation.phase !== "running" || !backend?.queueMessage) {
+    return false;
+  }
+  // Steering into an evidence-dead run swallows the human message that would
+  // otherwise trigger stale takeover through normal reply admission.
+  if (Date.now() - operation.lastActivityAtMs > REPLY_RUN_STALE_TAKEOVER_MS) {
     return false;
   }
   if (!isReplyBackendMessageInjectable(backend)) {
